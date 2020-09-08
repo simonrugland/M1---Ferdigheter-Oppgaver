@@ -1,0 +1,154 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>ToDo List</title>
+
+    <style>
+        table,
+        tr,
+        td,
+        th {
+            border: 1px solid gray;
+            border-collapse: collapse;
+        }
+
+        td,
+        th {
+            padding: 4px;
+        }
+
+        th {
+            background-color: crimson;
+            border: 1px solid gray;
+            color: whitesmoke;
+        }
+
+        tr:nth-child(even) {
+            background-color: teal;
+            color: white;
+        }
+    </style>
+
+
+
+</head>
+
+
+<body>
+
+    <table id="taskLists">
+    </table>
+    <br>
+
+    Write Task: <input id="taskinput" type="text">
+    Write Responsible:<input id="nameinput" tupe="text">
+    Deadline : <input id="dateinput" type="date"><button onclick="addTask()">Add Task & Responsible</button>
+
+    <script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-analytics.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.6.1/firebase-firestore.js"></script>
+
+    <script>
+        // Your web app's Firebase configuration
+        var firebaseConfig = {
+            apiKey: "AIzaSyBNSRtTLFh0hfd7DRqmSDBUjaVelWWk0ZA",
+            authDomain: "todo-list-a5fcd.firebaseapp.com",
+            databaseURL: "https://todo-list-a5fcd.firebaseio.com",
+            projectId: "todo-list-a5fcd",
+            storageBucket: "todo-list-a5fcd.appspot.com",
+            messagingSenderId: "610477373514",
+            appId: "1:610477373514:web:370d6296123c108a734eb3",
+            measurementId: "G-MERNBNT9JP"
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        firebase.analytics();
+        var db = firebase.firestore();
+        //model
+        let taskTable = document.getElementById("taskLists")
+        let tasks = db.collection('tasks');
+        let tasksRef = db.collection('tasks').doc();
+        let html;
+
+        //view
+        // display();
+        function display() {
+            html = `
+                     <tr>
+                        <th>Task</th>
+                        <th>Done?</th>
+                        <th></th>
+                        <th>Responsible</th>
+                        <th></th>
+                        <th>Deadline</th>
+                        <th>Finished-on:</th>
+                        </tr>
+                        `;
+        }
+
+        tasks.onSnapshot(
+            function createTasksandRows() {
+                tasks.get().then((document) => {
+                    display();
+                    document.forEach((doc) => {
+                        const ischecked = doc.data().isDone ? 'checked="checked"' : '';
+
+                        html += `
+                                <tr >
+                                    <td>${doc.data().description}</td>
+                                    <td><input type="checkbox" onchange="checkMark('${doc.id}')" ${ischecked} /></td>
+
+                                <td>
+                                    <button onclick="deleteTask('${doc.id}')">Delete</button>
+                                    <button>Edit</button>
+                                    </td>
+                                    <td>${doc.data().person}</td>
+                                    <td><button>Edit-Responsible</button>
+                                        </td>
+                                        <td>${doc.data().dateDeadline}</td>
+                                        <td>${doc.data().doneDate}</td>
+                                        </tr> `
+
+                    })
+                    taskTable.innerHTML = html;
+                })
+            })
+
+        //controller
+        let inputTask = document.getElementById("taskinput");
+        let inputResponsible = document.getElementById("nameinput");
+        let inputDate = document.getElementById("dateinput")
+        let d = new Date();
+
+        //  console.log(d);
+        function addTask() {
+            if (inputResponsible.value == '' && inputResponsible.value == '' && inputDate.value == ''
+                || inputResponsible.value == '' || inputResponsible.value == '' || inputDate.value == '') { return alert("Fyll inn input boxene") };
+            let newTodoTask = {
+                description: inputTask.value,
+                person: inputResponsible.value,
+                dateDeadline: inputDate.value,
+                doneDate: 'No Date',
+                isDone: false
+            };
+            tasks.add(newTodoTask)
+            inputTask.value = '';
+            inputResponsible.value = '';
+        }
+        function checkMark(index) {
+            db.collection('tasks').doc(index).update({
+                isDone: true,
+                doneDate: d.toLocaleString('nb-no')
+            });
+        }
+        function deleteTask(index) {
+            db.collection('tasks').doc(index).delete().then(function () {
+            });
+        };
+
+    </script>
+</body>
+
+</html>
